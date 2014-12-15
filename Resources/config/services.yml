@@ -1,4 +1,11 @@
 services:
-#    keboola_youtube_extractor.example:
-#        class: Keboola\YoutubeExtractorBundle\Example
-#        arguments: [@service_id, "plain_value", %parameter%]
+    ex_youtube.job_executor:
+        class: Keboola\YoutubeExtractorBundle\Job\Executor
+        arguments: ['@keboola_extractor.configuration', '@ex_youtube.extractor', '@logger', '@syrup.temp', '@syrup.encryptor']
+    ex_youtube.extractor:
+        class: Keboola\YoutubeExtractorBundle\YoutubeExtractor
+        arguments: {  }
+    keboola_extractor.configuration:
+        class: Keboola\ExtractorBundle\Common\Configuration
+        arguments: ['%app_name%', '@syrup.temp']
+parameters: null
