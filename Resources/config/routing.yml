@@ -1,0 +1,3 @@
+keboola_youtube_extractor_homepage:
+    path:     /hello/{name}
+    defaults: { _controller: KeboolaYoutubeExtractorBundle:Default:index }
