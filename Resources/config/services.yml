@@ -4,7 +4,7 @@ services:
         arguments: ['@keboola_extractor.configuration', '@ex_youtube.extractor', '@logger', '@syrup.temp', '@syrup.encryptor']
     ex_youtube.extractor:
         class: Keboola\YoutubeExtractorBundle\YoutubeExtractor
-        arguments: {  }
+        arguments: ['%youtube%']
     keboola_extractor.configuration:
         class: Keboola\ExtractorBundle\Common\Configuration
         arguments: ['%app_name%', '@syrup.temp']

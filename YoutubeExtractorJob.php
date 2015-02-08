@@ -2,12 +2,12 @@
 
 namespace Keboola\YoutubeExtractorBundle;
 
-use Keboola\ExtractorBundle\Extractor\Jobs\JsonJob;
+use Keboola\ExtractorBundle\Extractor\Jobs\JsonRecursiveJob;
 use	Keboola\Utils\Utils;
 use Syrup\ComponentBundle\Exception\SyrupComponentException;
 use	Keboola\Google\ClientBundle\Google\RestApi;
 
-class YoutubeExtractorJob extends JsonJob
+class YoutubeExtractorJob extends JsonRecursiveJob
 {
 	protected $configName;
 
@@ -46,13 +46,6 @@ class YoutubeExtractorJob extends JsonJob
 	 */
 	protected function nextPage($response, $data)
 	{
-		/* TODO
-		if (empty($response->pagination->next_url)) {
-			return false;
-		}
-
-		return $this->client->createRequest("GET", $response->pagination->next_url);
-		*/
 		return false;
 	}
 
@@ -64,7 +57,7 @@ class YoutubeExtractorJob extends JsonJob
 	protected function getAuthHeader() {
 		// Refresh token if it expires within next 15min
 		// (allows a buffer for backoff)
-		if ($this->accessToken['expires'] < $time() + 15*60) {
+		if ($this->accessToken['expires'] < time() + 15*60) {
 			$token = $this->googleClient->refreshToken();
 			$this->accessToken['token'] = $token["access_token"];
 			$this->accessToken['type'] = $token["token_type"];
@@ -73,5 +66,4 @@ class YoutubeExtractorJob extends JsonJob
 
 		return $this->accessToken['type'] . " " . $this->accessToken['token'];
 	}
-
 }

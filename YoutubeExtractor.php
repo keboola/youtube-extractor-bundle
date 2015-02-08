@@ -3,9 +3,11 @@
 namespace Keboola\YoutubeExtractorBundle;
 
 use Keboola\ExtractorBundle\Extractor\Extractors\JsonExtractor as Extractor;
-use Syrup\ComponentBundle\Exception\SyrupComponentException;
+use Syrup\ComponentBundle\Exception\SyrupComponentException,
+	Syrup\ComponentBundle\Exception\UserException;
 use GuzzleHttp\Client as Client;
-use Keboola\YoutubeExtractorBundle\YoutubeExtractorJob;
+use Keboola\YoutubeExtractorBundle\Jobs,
+	Keboola\YoutubeExtractorBundle\Parser\YoutubeAnalyticsParser;
 use	Keboola\Google\ClientBundle\Google\RestApi;
 
 class YoutubeExtractor extends Extractor
@@ -23,29 +25,48 @@ class YoutubeExtractor extends Extractor
 	}
 
 	public function run($config) {
-		$client = new GuzzleClient([
-			"base_url" => "https://www.googleapis.com/youtube/analytics/v1/reports",
-			"defaults" => [
-				"headers" => [
-					"Accept" => "application/json"
+		$clients['analytics'] = new Client([
+			'base_url' => 'https://www.googleapis.com/youtube/analytics/v1/',
+			'defaults' => [
+				'headers' => [
+					'Accept' => 'application/json'
 				]
 			]
 		]);
 
-		$clientId = $this->apiKeys["client-id"];
-		$clientSecret = $this->apiKeys["client-secret"];
-		$restApi = new RestApi($clientId, $clientSecret, null, $config["attributes"]["refresh_token"]);
+		$clients['data'] = new Client([
+			'base_url' => 'https://www.googleapis.com/youtube/v3/',
+			'defaults' => [
+				'headers' => [
+					'Accept' => 'application/json'
+				]
+			]
+		]);
 
-		foreach($config["jobs"] as $jobConfig) {
-			// $this->parser is, by default, only pre-created when using JsonExtractor
-			// Otherwise it must be created like Above example, OR within the job itself
-			$job = new YoutubeExtractorJob($jobConfig, $client, $this->parser);
+		$clientId = $this->apiKeys['client-id'];
+		$clientSecret = $this->apiKeys['client-secret'];
+		$restApi = new RestApi($clientId, $clientSecret, null, $config['attributes']['oauth']['refresh_token']);
+
+		$analyticsParser = new YoutubeAnalyticsParser($this->getTemp());
+
+		foreach($config['jobs'] as $jobConfig) {
+			switch ($jobConfig->getConfig()['api']) {
+				case 'data':
+					$job = new Jobs\DataJob($jobConfig, $clients['data'], $this->parser);
+					break;
+				case 'analytics':
+					$job = new Jobs\AnalyticsJob($jobConfig, $clients['analytics'], $analyticsParser);
+					break;
+				default:
+					throw new UserException('API must be one of [data,analytics]. ' . $jobConfig->getConfig()['api'] . ' configured');
+					break;
+			}
+
 			$job->setGoogleClient($restApi);
 			$job->run();
 		}
 
-		// ONLY available in the Json/Wsdl parsers -
-		// otherwise just pass an array of CsvFile OR Common/Table files to upload
 		$this->sapiUpload($this->parser->getCsvFiles());
+		$this->sapiUpload($analyticsParser->getCsvFiles());
 	}
 }

@@ -26,11 +26,19 @@ class OAuthController extends OAuth20Controller
 	 */
 	protected function getOAuthUrl($redirUrl, $clientId,  $hash)
 	{
+		$scopes = implode('+', [
+			'https://www.googleapis.com/auth/yt-analytics.readonly',
+			'https://www.googleapis.com/auth/yt-analytics-monetary.readonly',
+			'https://www.googleapis.com/auth/youtube.readonly',
+			'https://www.googleapis.com/auth/youtubepartner',
+			'https://www.googleapis.com/auth/youtubepartner-channel-audit'
+		]);
+
 		return "https://accounts.google.com/o/oauth2/auth?"
 			. "response_type=code"
 			. "&client_id={$clientId}"
 			. "&redirect_uri={$redirUrl}"
-			. "&scope=https://www.googleapis.com/auth/yt-analytics.readonly+https://www.googleapis.com/auth/yt-analytics-monetary.readonly"
+			. "&scope={$scopes}"
 			. "&state={$hash}"
 			. "&access_type=offline"
 			. "&approval_prompt=force";
