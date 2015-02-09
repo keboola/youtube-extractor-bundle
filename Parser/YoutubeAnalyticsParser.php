@@ -22,11 +22,12 @@ class YoutubeAnalyticsParser
 		$this->temp = $temp;
 	}
 
-	public function process($data, $type = 'root', $parentId = null)
+	public function process($data, $type = 'root', $parentData = [])
 	{
-		$table = $this->getFile($type, $data->columnHeaders);
+		$table = $this->getFile($type, $data->columnHeaders, array_keys($parentData));
+
 		foreach($data->rows as $row) {
-			$table->writeRow($row);
+			$table->writeRow(array_merge($row, $parentData));
 		}
 	}
 
@@ -45,18 +46,17 @@ class YoutubeAnalyticsParser
 	 * @param \StdClass[] $headers Array of objects containing a $name property
 	 * @return Table
 	 */
-	protected function getFile($name, $headers)
+	protected function getFile($name, $headers, $parentCols)
 	{
 		if (empty($this->results[$name])) {
-			$header = [];
-			array_walk(
-				$headers,
+			$header = array_map(
 				function ($column) {
-					$header[] = $column->name;
+					return $column->name;
 				},
-				$header
+				$headers
 			);
-			$this->results[$name] = Table::create($name, $header, $this->temp);
+
+			$this->results[$name] = Table::create($name, array_merge($header, $parentCols), $this->temp);
 		}
 
 		return $this->results[$name];

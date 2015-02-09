@@ -13,12 +13,21 @@ class AnalyticsJob extends YoutubeExtractorJob
 			Logger::log('warning', "Unknown response kind: {$response->kind}");
 		}
 
+		if (empty($response->rows)) {
+			Logger::log('warning', "Empty response at {$this->configName}");
+			return;
+		}
+
 		$parentCols = [];
 		foreach($this->parentParams as $k => $v) {
 			$k = $this->prependParent($k);
 			$parentCols[$k] = $v['value'];
 		}
 
-		$this->parser->process($response, $this->configName, $parentCols);
+		$type = !empty($this->config['dataType'])
+			? $this->config['dataType']
+			: $this->config['endpoint'];
+
+		$this->parser->process($response, $type, $parentCols);
 	}
 }

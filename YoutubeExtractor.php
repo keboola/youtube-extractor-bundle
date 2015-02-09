@@ -62,6 +62,8 @@ class YoutubeExtractor extends Extractor
 					break;
 			}
 
+			$job->setParsers(['data' => $this->parser, 'analytics' => $analyticsParser]);
+			$job->setClients($clients);
 			$job->setGoogleClient($restApi);
 			$job->run();
 		}

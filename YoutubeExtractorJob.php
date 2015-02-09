@@ -2,10 +2,12 @@
 
 namespace Keboola\YoutubeExtractorBundle;
 
-use Keboola\ExtractorBundle\Extractor\Jobs\JsonRecursiveJob;
+use Keboola\ExtractorBundle\Extractor\Jobs\JsonRecursiveJob,
+	Keboola\ExtractorBundle\Common\JobConfig;
 use	Keboola\Utils\Utils;
 use Syrup\ComponentBundle\Exception\SyrupComponentException;
 use	Keboola\Google\ClientBundle\Google\RestApi;
+use GuzzleHttp\Client as GuzzleClient;
 
 class YoutubeExtractorJob extends JsonRecursiveJob
 {
@@ -22,6 +24,16 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 	protected $accessToken = [
 		'expires' => 0
 	];
+
+	/**
+	 * @var GuzzleClient[]
+	 */
+	protected $guzzleClients;
+
+	/**
+	 * @var array
+	 */
+	protected $parsers;
 
 	/**
 	 * @brief Return a download request
@@ -65,5 +77,43 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 		}
 
 		return $this->accessToken['type'] . " " . $this->accessToken['token'];
+	}
+
+	/**
+	 * Create a child job with current client and parser
+	 * @param JobConfig $config
+	 * @return static
+	 */
+	protected function createChild(JobConfig $config)
+	{
+		$jobs = [
+			'analytics' => '\Keboola\YoutubeExtractorBundle\Jobs\AnalyticsJob',
+			'data' => '\Keboola\YoutubeExtractorBundle\Jobs\DataJob'
+		];
+		$job = new $jobs[$config->getConfig()['api']](
+			$config,
+			$this->guzzleClients[$config->getConfig()['api']],
+			$this->parsers[$config->getConfig()['api']]
+		);
+		$job->setGoogleClient($this->googleClient);
+		$job->setClients($this->guzzleClients);
+		$job->setParsers($this->parsers);
+		return $job;
+	}
+
+	/**
+	 * @param GuzzleClient[] $clients
+	 */
+	public function setClients(array $clients)
+	{
+		$this->guzzleClients = $clients;
+	}
+
+	/**
+	 * @param GuzzleClient[] $clients
+	 */
+	public function setParsers(array $parsers)
+	{
+		$this->parsers = $parsers;
 	}
 }

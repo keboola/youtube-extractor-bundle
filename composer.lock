@@ -1576,16 +1576,16 @@
         },
         {
             "name": "keboola/php-utils",
-            "version": "0.1.13",
+            "version": "0.1.14",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/php-utils.git",
-                "reference": "e5a3eeaec0051d8d66b0fe08f3a526afd767fc49"
+                "reference": "07d8f3b0ff3245c7d4bd0b14b56956ac3a77013b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/php-utils/zipball/e5a3eeaec0051d8d66b0fe08f3a526afd767fc49",
-                "reference": "e5a3eeaec0051d8d66b0fe08f3a526afd767fc49",
+                "url": "https://api.github.com/repos/keboola/php-utils/zipball/07d8f3b0ff3245c7d4bd0b14b56956ac3a77013b",
+                "reference": "07d8f3b0ff3245c7d4bd0b14b56956ac3a77013b",
                 "shasum": ""
             },
             "require": {
@@ -1616,7 +1616,7 @@
             "keywords": [
                 "utility"
             ],
-            "time": "2014-12-09 19:43:46"
+            "time": "2015-02-09 10:07:19"
         },
         {
             "name": "keboola/storage-api-client",
