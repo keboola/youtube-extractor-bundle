@@ -9,6 +9,7 @@ use GuzzleHttp\Client as Client;
 use Keboola\YoutubeExtractorBundle\Jobs,
 	Keboola\YoutubeExtractorBundle\Parser\YoutubeAnalyticsParser;
 use	Keboola\Google\ClientBundle\Google\RestApi;
+use	Keboola\Code\Builder;
 
 class YoutubeExtractor extends Extractor
 {
@@ -24,7 +25,8 @@ class YoutubeExtractor extends Extractor
 		$this->apiKeys = $params;
 	}
 
-	public function run($config) {
+	public function run($config)
+	{
 		$clients['analytics'] = new Client([
 			'base_url' => 'https://www.googleapis.com/youtube/analytics/v1/',
 			'defaults' => [
@@ -49,7 +51,18 @@ class YoutubeExtractor extends Extractor
 
 		$analyticsParser = new YoutubeAnalyticsParser($this->getTemp());
 
+		$builder = new Builder();
+
 		foreach($config['jobs'] as $jobConfig) {
+			$this->saveLastJobTime($jobConfig->getJobId(), "start");
+			$startTime = time();
+
+			foreach(['start', 'success', 'error', 'success_startTime'] as $timeAttr) {
+				if (empty($config['attributes']['job'][$jobConfig->getJobId()][$timeAttr])) {
+					$config['attributes']['job'][$jobConfig->getJobId()][$timeAttr] = date(DATE_W3C, 0);
+				}
+			}
+
 			switch ($jobConfig->getConfig()['api']) {
 				case 'data':
 					$job = new Jobs\DataJob($jobConfig, $clients['data'], $this->parser);
@@ -65,10 +78,32 @@ class YoutubeExtractor extends Extractor
 			$job->setParsers(['data' => $this->parser, 'analytics' => $analyticsParser]);
 			$job->setClients($clients);
 			$job->setGoogleClient($restApi);
-			$job->run();
+			$job->setAttributes($config['attributes']);
+			$job->setBuilder($builder);
+
+			try {
+				$job->run();
+			} catch(\Exception $e) {
+				$this->saveLastJobTime($jobConfig->getJobId(), "error");
+				$this->saveLastJobTime(
+					$jobConfig->getJobId(),
+					"error_startTime",
+					date(DATE_W3C, $startTime)
+				);
+				throw $e;
+			}
+
+			$jobTimes[$jobConfig->getJobId()]['success'] = date(DATE_W3C);
+			$jobTimes[$jobConfig->getJobId()]['success_startTime'] = date(DATE_W3C, $startTime);
+
 		}
 
 		$this->sapiUpload($this->parser->getCsvFiles());
 		$this->sapiUpload($analyticsParser->getCsvFiles());
+
+		foreach($jobTimes as $jobId => $times) {
+			$this->saveLastJobTime($jobId, "success", $times['success']);
+			$this->saveLastJobTime($jobId, "success_startTime", $times['success_startTime']);
+		}
 	}
 }

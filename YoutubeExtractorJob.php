@@ -8,6 +8,7 @@ use	Keboola\Utils\Utils;
 use Syrup\ComponentBundle\Exception\SyrupComponentException;
 use	Keboola\Google\ClientBundle\Google\RestApi;
 use GuzzleHttp\Client as GuzzleClient;
+use	Keboola\Code\Builder;
 
 class YoutubeExtractorJob extends JsonRecursiveJob
 {
@@ -36,15 +37,30 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 	protected $parsers;
 
 	/**
+	 * @var array
+	 */
+	protected $attributes;
+
+	/**
+	 * @var Builder
+	 */
+	protected $stringBuilder;
+
+	/**
 	 * @brief Return a download request
 	 *
 	 * @return \GuzzleHttp\Message\Request
 	 */
 	protected function firstPage()
 	{
-		$params = Utils::json_decode($this->config["params"], true);
-		$url = Utils::buildUrl(trim($this->config["endpoint"], "/"), $params);
+		$params = (array) Utils::json_decode($this->config["params"]);
 
+		array_walk($params, function(&$value, $key){
+			$value = is_scalar($value) ? $value : $this->stringBuilder->run($value, ['attr' => $this->attributes]);
+		});
+
+		$url = Utils::buildUrl(trim($this->config["endpoint"], "/"), $params);
+var_dump($url);
 		$this->configName = preg_replace("/[^A-Za-z0-9\-\._]/", "_", trim($this->config["endpoint"], "/"));
 
 		return $this->client->createRequest("GET", $url)->setHeader('Authorization', $this->getAuthHeader());
@@ -116,5 +132,21 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 	public function setParsers(array $parsers)
 	{
 		$this->parsers = $parsers;
+	}
+
+	/**
+	 * @param array $attributes
+	 */
+	public function setAttributes(array $attributes)
+	{
+		$this->attributes = $attributes;
+	}
+
+	/**
+	 * @param Builder $builder
+	 */
+	public function setBuilder(Builder $builder)
+	{
+		$this->stringBuilder = $builder;
 	}
 }
