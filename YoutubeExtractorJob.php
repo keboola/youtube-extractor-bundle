@@ -53,8 +53,9 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 	/**
 	 * @brief Return a download request OR false if no next page exists
 	 *
-	 * @param $response
-	 * @return \Keboola\ExtractorBundle\Client\SoapRequest | \GuzzleHttp\Message\Request | false
+	 * @param object $response
+	 * @param array $data
+	 * @return \GuzzleHttp\Message\Request | false
 	 */
 	protected function nextPage($response, $data)
 	{
