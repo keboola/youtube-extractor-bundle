@@ -149,5 +149,7 @@ JSON Parameters:
 + Response 201 (application/json)
 
         {
-            "TODO"
+            "status": "ok",
+            "oauth_token": "dsjioafhoiy832yt598y7895y",
+            "oauth_token_secret": "kf98v0894u8j580jy8902xyjciurewc"
         }
