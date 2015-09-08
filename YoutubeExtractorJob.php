@@ -2,12 +2,14 @@
 
 namespace Keboola\YoutubeExtractorBundle;
 
-use Keboola\ExtractorBundle\Extractor\Jobs\JsonRecursiveJob,
+use	Keboola\ExtractorBundle\Extractor\Jobs\JsonRecursiveJob,
 	Keboola\ExtractorBundle\Common\JobConfig;
-use	Keboola\Utils\Utils;
-use Syrup\ComponentBundle\Exception\SyrupComponentException;
+use	Keboola\Utils\Utils,
+	Keboola\Utils\Exception\JsonDecodeException;
+use	Syrup\ComponentBundle\Exception\SyrupComponentException,
+	Syrup\ComponentBundle\Exception\UserException;
 use	Keboola\Google\ClientBundle\Google\RestApi;
-use GuzzleHttp\Client as GuzzleClient;
+use	GuzzleHttp\Client as GuzzleClient;
 use	Keboola\Code\Builder;
 
 class YoutubeExtractorJob extends JsonRecursiveJob
@@ -53,14 +55,18 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 	 */
 	protected function firstPage()
 	{
-		$params = (array) Utils::json_decode($this->config["params"]);
+		try {
+			$params = (array) Utils::json_decode($this->config["params"]);
+		} catch(JsonDecodeException $e) {
+			throw new UserException("Error decoding params: " . $e->getMessage(), $e, ['job' => $this->config]);
+		}
 
 		array_walk($params, function(&$value, $key){
 			$value = is_scalar($value) ? $value : $this->stringBuilder->run($value, ['attr' => $this->attributes]);
 		});
 
 		$url = Utils::buildUrl(trim($this->config["endpoint"], "/"), $params);
-var_dump($url);
+
 		$this->configName = preg_replace("/[^A-Za-z0-9\-\._]/", "_", trim($this->config["endpoint"], "/"));
 
 		return $this->client->createRequest("GET", $url)->setHeader('Authorization', $this->getAuthHeader());
