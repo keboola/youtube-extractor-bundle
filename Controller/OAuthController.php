@@ -4,6 +4,9 @@ namespace Keboola\YoutubeExtractorBundle\Controller;
 
 use Keboola\ExtractorBundle\Controller\OAuth20Controller;
 
+use	Symfony\Component\HttpFoundation\Response,
+	Symfony\Component\HttpFoundation\Request;
+
 class OAuthController extends OAuth20Controller
 {
 	/**
@@ -17,6 +20,12 @@ class OAuthController extends OAuth20Controller
 	 * @var string
 	 */
 	protected $tokenUrl = "https://accounts.google.com/o/oauth2/token";
+	
+	public function preExecute(Request $request)
+        {
+            parent::preExecute($request);
+            Request::setTrustedProxies(array($request->server->get('REMOTE_ADDR')));
+        }
 
 	/**
 	 * Create OAuth 2.0 request code URL (use CODE "response type")
