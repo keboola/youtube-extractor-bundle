@@ -2,12 +2,12 @@
 
 namespace Keboola\YoutubeExtractorBundle;
 
+use Guzzle\Http\Exception\ClientErrorResponseException;
 use	Keboola\ExtractorBundle\Extractor\Jobs\JsonRecursiveJob,
 	Keboola\ExtractorBundle\Common\JobConfig;
 use	Keboola\Utils\Utils,
 	Keboola\Utils\Exception\JsonDecodeException;
-use	Syrup\ComponentBundle\Exception\SyrupComponentException,
-	Syrup\ComponentBundle\Exception\UserException;
+use	Syrup\ComponentBundle\Exception\UserException;
 use	Keboola\Google\ClientBundle\Google\RestApi;
 use	GuzzleHttp\Client as GuzzleClient;
 use	Keboola\Code\Builder;
@@ -22,7 +22,7 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 	protected $googleClient;
 
 	/**
-	 * @var string
+	 * @var array
 	 */
 	protected $accessToken = [
 		'expires' => 0
@@ -69,7 +69,11 @@ class YoutubeExtractorJob extends JsonRecursiveJob
 
 		$this->configName = preg_replace("/[^A-Za-z0-9\-\._]/", "_", trim($this->config["endpoint"], "/"));
 
-		return $this->client->createRequest("GET", $url)->setHeader('Authorization', $this->getAuthHeader());
+		try {
+            return $this->client->createRequest("GET", $url)->setHeader('Authorization', $this->getAuthHeader());
+        } catch (ClientErrorResponseException $e) {
+		    throw new UserException($e->getMessage(), $e);
+        }
 	}
 
 	/**

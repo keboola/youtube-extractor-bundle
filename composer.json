@@ -4,12 +4,11 @@
     "description": "Some new component",
     "keywords": [],
     "authors": [],
-    "repositories": [],
     "repositories": [
-		{
-			"type": "vcs",
-			"url": "git@bitbucket.org:keboola/google-client-bundle.git"
-		}
+        {
+          "type": "vcs",
+          "url": "git@bitbucket.org:keboola/google-client-bundle.git"
+        }
     ],
     "require": {
         "keboola/extractor-bundle": "~1.1.0",
